@@ -10,7 +10,6 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 authors = [{name = "AI-Factory", email = "dev@modelmarket.dev"}]
-keywords = ["aimarket", "ai-agents", "marketplace", "mcp", "agent", "httpx", "sdk"]
 dependencies = ["httpx>=0.28", "cryptography>=44"]
 
 [project.urls]
