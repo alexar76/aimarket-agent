@@ -9,4 +9,7 @@ Usage:
     aimarket-agent run "translate spec to 5 languages" --budget 3.00
 """
 
+from aimarket_agent.agent import AIMarketAgent
+
+__all__ = ["AIMarketAgent", "__version__"]
 __version__ = "2.0.0"
