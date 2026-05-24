@@ -13,24 +13,6 @@ This agent connects to **[modelmarket.dev](https://modelmarket.dev)** — the re
 pip install aimarket-agent
 ```
 
-Requires **Python 3.11+**.
-
-From source (before PyPI or for dev):
-
-```bash
-pip install "git+https://github.com/alexar76/aimarket-agent.git"
-# monorepo dev:
-pip install -e ./aimarket-agent
-```
-
-### Publish (maintainers)
-
-```bash
-PYPI_API_TOKEN=pypi-... ./scripts/publish_pypi.sh aimarket-agent
-```
-
-GitHub Actions: set repo secret `PYPI_API_TOKEN`, then run **Publish to PyPI** workflow or create a GitHub Release.
-
 ## Quick Start
 
 ```bash
