@@ -6,10 +6,28 @@ build-backend = "setuptools.build_meta"
 name = "aimarket-agent"
 version = "2.0.0"
 description = "Reference consumer agent for AIMarket Protocol v2 — AI-to-AI discovery, payment, invoke"
-license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "AIMarket Contributors" }]
+keywords = ["aimarket", "ai-agents", "marketplace", "micropayments", "mcp"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = ["httpx>=0.28", "cryptography>=44"]
+
+[project.urls]
+Homepage = "https://github.com/alexar76/aimarket-agent"
+Repository = "https://github.com/alexar76/aimarket-agent"
+Documentation = "https://github.com/alexar76/aimarket-agent#readme"
+Issues = "https://github.com/alexar76/aimarket-agent/issues"
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "pytest-httpx>=0.35"]
