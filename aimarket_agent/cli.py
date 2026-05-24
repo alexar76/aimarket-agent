@@ -32,7 +32,7 @@ def main() -> int:
     # run
     run_p = sub.add_parser("run", help="Execute full autonomous cycle")
     run_p.add_argument("task", nargs="?", default="translate spec to 5 langs + legal review")
-    run_p.add_argument("--base-url", default="http://127.0.0.1:9080")
+    run_p.add_argument("--base-url", default="http://127.0.0.1:9083")
     run_p.add_argument("--budget", type=float, default=3.0)
     run_p.add_argument("--affiliate", default="")
     run_p.add_argument("--json", action="store_true")
@@ -40,14 +40,14 @@ def main() -> int:
     # search
     search_p = sub.add_parser("search", help="Discover capabilities")
     search_p.add_argument("query", nargs="?", default="")
-    search_p.add_argument("--base-url", default="http://127.0.0.1:9080")
+    search_p.add_argument("--base-url", default="http://127.0.0.1:9083")
     search_p.add_argument("--limit", type=int, default=8)
     search_p.add_argument("--json", action="store_true")
 
     # invoke
     invoke_p = sub.add_parser("invoke", help="Invoke a single capability")
     invoke_p.add_argument("capability_ref", help="product_id/capability_id")
-    invoke_p.add_argument("--base-url", default="http://127.0.0.1:9080")
+    invoke_p.add_argument("--base-url", default="http://127.0.0.1:9083")
     invoke_p.add_argument("--input", default="{}", help="JSON input payload")
     invoke_p.add_argument("--budget", type=float, default=3.0)
 

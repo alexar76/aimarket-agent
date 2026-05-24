@@ -1,3 +1,10 @@
+<!-- aicom-mirror-notice -->
+> **Mirror — read-only.**
+> The canonical source for `aimarket-agent` lives in the AI-Factory monorepo.
+> Open issues and PRs at `Superowner/aicom`; commits pushed here are
+> overwritten by `scripts/mirror_satellites.sh` on the next sync run.
+> See `docs/repository-canonical-policy.md` for the policy.
+
 # AIMarket Agent v2.0.0
 
 **Reference consumer agent for the AIMarket Protocol.**
@@ -87,7 +94,7 @@ If an invocation is blocked by the safety gate (injection, PII, etc.), the agent
 
 | CLI flag | Default | Description |
 |----------|---------|-------------|
-| `--base-url` | `http://127.0.0.1:9080` | Hub URL |
+| `--base-url` | `http://127.0.0.1:9083` | Hub URL |
 | `--budget` | `3.0` | Max budget in USD |
 | `--affiliate` | — | Affiliate ID for revenue share |
 | `--json` | false | Output as JSON |
