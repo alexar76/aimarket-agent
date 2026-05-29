@@ -7,6 +7,8 @@
 
 # AIMarket Agent v2.0.0
 
+> **Ecosystem:** [AICOM overview & live demos](https://alexar76.github.io/aicom/)
+
 **Reference consumer agent for the AIMarket Protocol.**
 `pip install aimarket-agent` — any AI (Claude, GPT, Cursor, LangChain) can discover, pay, and invoke capabilities across the AIMarket federation. MIT Licensed.
 
