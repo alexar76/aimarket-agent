@@ -32,11 +32,17 @@ class AIMarketAgent:
         budget: float = 3.0,
         timeout: float = 120.0,
         affiliate_id: str = "",
+        verify_receipts: bool = True,
     ):
         self.base_url = base_url.rstrip("/")
         self.budget = budget
         self.timeout = timeout
         self.affiliate_id = affiliate_id
+        # When True, each invoke receipt is cryptographically verified against the
+        # hub's Ed25519 public key (from /.well-known). Failures are surfaced in
+        # the result as receipt_verified / receipt_verify_reason, never raised.
+        self.verify_receipts = verify_receipts
+        self._verifier = None  # lazily built from the hub's well-known doc
         self.session = httpx.Client(timeout=timeout)
 
     def _url(self, path: str) -> str:
@@ -82,6 +88,14 @@ class AIMarketAgent:
             wk.raise_for_status()
         except Exception as exc:
             return {**result, "error": f"discovery failed: {exc}"}
+
+        # Build a receipt verifier from the hub's advertised signing key.
+        if self.verify_receipts:
+            try:
+                from aimarket_agent.receipts import ReceiptVerifier
+                self._verifier = ReceiptVerifier.from_well_known(wk.json())
+            except Exception:
+                self._verifier = None
 
         # Hub v3 exposes capability discovery via GET /ai-market/v2/search.
         # Older drafts proposed POST /ai-market/discover with a "plan" response —
@@ -186,6 +200,13 @@ class AIMarketAgent:
             body = r.json()
             price_val = body.get("price_usd", 0) or 0
             total_spent += price_val
+
+            # Cryptographically verify the signed receipt against the hub key.
+            if self.verify_receipts and self._verifier is not None:
+                vr = self._verifier.verify(body.get("receipt"))
+                body["receipt_verified"] = bool(vr)
+                body["receipt_verify_reason"] = vr.reason
+
             results.append(body)
 
             if body.get("success"):
@@ -256,7 +277,30 @@ class AIMarketAgent:
 
         if r.status_code == 403:
             return {"safety_blocked": True, **r.json()}
-        return r.json()
+
+        body = r.json()
+        if self.verify_receipts and isinstance(body, dict) and body.get("receipt"):
+            vr = self.verify_receipt(body.get("receipt"))
+            body["receipt_verified"] = bool(vr)
+            body["receipt_verify_reason"] = vr.reason
+        return body
+
+    def verify_receipt(self, receipt: dict[str, Any]):
+        """Verify a single receipt against the hub's public key.
+
+        Lazily fetches the hub's well-known signing key on first use. Returns a
+        ``receipts.VerifyResult`` (truthy when verified).
+        """
+        from aimarket_agent.receipts import ReceiptVerifier, VerifyResult
+
+        if self._verifier is None:
+            try:
+                wk = self.session.get(self._url("/.well-known/ai-market.json"))
+                wk.raise_for_status()
+                self._verifier = ReceiptVerifier.from_well_known(wk.json())
+            except Exception as exc:
+                return VerifyResult(False, f"well-known-fetch-failed: {exc}")
+        return self._verifier.verify(receipt)
 
     def close(self) -> None:
         self.session.close()
