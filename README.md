@@ -14,7 +14,7 @@
 
 ## Live Hub
 
-This agent connects to **[modelmarket.dev](https://modelmarket.dev)** — the reference hub with 12 capabilities and 14 plugins.
+This agent connects to **[modelmarket.dev](https://modelmarket.dev)** — the reference hub with 12 capabilities and 15 plugins.
 
 ## Install
 
