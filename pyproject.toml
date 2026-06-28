@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aimarket-agent"
+version = "2.1.0"
+description = "Reference consumer agent for AIMarket Protocol v2 — AI-to-AI discovery, payment, invoke"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{name = "AI-Factory", email = "dev@modelmarket.dev"}]
+dependencies = ["httpx>=0.28", "cryptography>=44"]
+
+[project.urls]
+Homepage = "https://github.com/alexar76/aimarket-agent"
+Documentation = "https://github.com/alexar76/aimarket-agent#readme"
+Repository = "https://github.com/alexar76/aimarket-agent"
+Issues = "https://github.com/alexar76/aimarket-agent/issues"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-httpx>=0.35"]
+
+[project.scripts]
+aimarket-agent = "aimarket_agent.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["aimarket_agent*"]
