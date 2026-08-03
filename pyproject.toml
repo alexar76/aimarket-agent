@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aimarket-agent"
+version = "2.2.0"
+description = "Reference consumer agent for AIMarket Protocol v2 — AI-to-AI discovery, payment, invoke"
+readme = "README.md"
+license = "MIT"
+# No "License :: OSI Approved ::" classifier: PEP 639 superseded them by the SPDX
+# `license` expression above, and setuptools now REFUSES the build outright rather than
+# warning — caught by rebuilding before recommending an upload.
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+requires-python = ">=3.11"
+authors = [{name = "AI-Factory", email = "dev@modelmarket.dev"}]
+dependencies = ["httpx>=0.28", "cryptography>=44"]
+
+[project.urls]
+Homepage = "https://github.com/alexar76/aimarket-agent"
+Documentation = "https://github.com/alexar76/aimarket-agent#readme"
+Repository = "https://github.com/alexar76/aimarket-agent"
+Issues = "https://github.com/alexar76/aimarket-agent/issues"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-httpx>=0.35"]
+
+[project.scripts]
+aimarket-agent = "aimarket_agent.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["aimarket_agent*"]
