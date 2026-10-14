@@ -1,0 +1,55 @@
+name: Publish to PyPI
+
+# Publishes aimarket-agent to PyPI via **Trusted Publishing (OIDC)** — no API token stored.
+# One-time setup: PyPI → project aimarket-agent → Manage → Publishing → add a GitHub Actions
+# trusted publisher: owner alexar76, repository aimarket-agent, workflow filename
+# publish-pypi.yml (leave "Environment name" blank to match this workflow).
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        with:
+          python-version: "3.12"
+
+      - name: Build package
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  # The only job that can mint an OIDC token runs nothing but the two actions below:
+  # the build above (and every install script it pulls in) never holds one.
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
+        with:
+          name: dist
+          path: dist/
+
+      # Trusted Publishing (OIDC, no stored token) — uploads dist/*.
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33  # v1.14.2
