@@ -44,6 +44,7 @@ from aimarket_agent.mandates import (
     AgentKey,
     JobContext,
     Mandate,
+    approval_payload,
     issue_mandate,
     mandate_digest,
     owner_change_authorization,
@@ -67,6 +68,7 @@ __all__ = [
     "AgentKey",
     "JobContext",
     "Mandate",
+    "approval_payload",
     "issue_mandate",
     "mandate_digest",
     "owner_change_authorization",
@@ -81,4 +83,4 @@ __all__ = [
     "unsigned_receipt_fields",
     "__version__",
 ]
-__version__ = "2.5.1"
+__version__ = "2.6.0"

@@ -171,3 +171,38 @@ class TestAgentClient:
         client = AIMarketAgent("https://h.test", verify_receipts=False, api_key="aimk_own")
         client.session = httpx.Client(transport=httpx.MockTransport(handler))
         assert client.invoke_single("p", "c@v1", {})["safety_blocked"] is True
+
+
+class TestOwnerApproval:
+    """§5.6: the owner's answer signs the exact request, its ceiling and the decision."""
+
+    APPROVAL = {"approval_id": "apr_" + "a" * 24, "mandate": "sha256-" + "A" * 43 + "=",
+                "body_sha256": "b" * 64, "max_micro": 12_130_000}
+
+    def test_the_signature_covers_the_lines_the_spec_names(self):
+        from aimarket_agent import approval_payload
+        from aimarket_agent.mandates import public_key_of
+
+        owner = AgentKey.from_seed(b"\x07" * 32)
+        payload = approval_payload(owner, hub_origin="https://hub.test/", approval=self.APPROVAL,
+                                   t=1_790_000_000, nonce="n" * 22)
+        message = "\n".join(["aimarket-mandate-approval/1", "https://hub.test", self.APPROVAL["approval_id"],
+                             "approve", self.APPROVAL["mandate"], self.APPROVAL["body_sha256"], "12130000",
+                             "1790000000", "n" * 22]).encode()
+        sig = payload["s"] + "=" * (-len(payload["s"]) % 4)
+        import base64
+
+        public_key_of(owner.did).verify(base64.urlsafe_b64decode(sig), message)
+        assert payload["decision"] == "approve" and payload["by"] == owner.did
+        deny = approval_payload(owner, hub_origin="https://hub.test", approval=self.APPROVAL, decision="deny",
+                                t=1_790_000_000, nonce="n" * 22)
+        assert deny["s"] != payload["s"]
+        with pytest.raises(ValueError):
+            approval_payload(owner, hub_origin="https://hub.test", approval=self.APPROVAL, decision="maybe")
+
+    def test_a_threshold_is_written_in_micro_usd(self):
+        owner, agent = AgentKey.from_seed(b"\x01" * 32), AgentKey.from_seed(b"\x02" * 32)
+        doc = issue_mandate(owner, agent.did, audience=["https://hub.test"], scope=["*"], per_call_usd=50,
+                            per_day_usd=100, approval_above_usd=10)
+        assert doc["credentialSubject"]["aimarketMandate"]["limits"]["approvalAbove"] == 10_000_000
+        assert verify_document(doc)

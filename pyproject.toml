@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aimarket-agent"
-version = "2.5.1"
+version = "2.6.0"
 description = "Reference consumer agent for AIMarket Protocol v2 — AI-to-AI discovery, payment, invoke"
 readme = "README.md"
 license = "MIT"

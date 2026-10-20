@@ -223,6 +223,7 @@ def issue_mandate(
     per_product_per_day_usd: float | None = None,
     subcontract_allowance_usd: float | None = None,
     subcontract_max_depth: int = 1,
+    approval_above_usd: float | None = None,
     parent: Mapping[str, Any] | str | None = None,
     valid_days: int = 30,
     valid_from: datetime | None = None,
@@ -231,7 +232,8 @@ def issue_mandate(
     """Build and sign a mandate (§3). Amounts are USD here and µUSD in the document.
 
     ``parent`` is the parent mandate (or its digest) for a re-delegation; the hub then
-    requires this mandate to be narrower in every respect (§3.4).
+    requires this mandate to be narrower in every respect (§3.4). ``approval_above_usd`` makes
+    any single call that costs more wait for an owner's signed approval (§5.6).
     """
     start = (valid_from or datetime.now(timezone.utc)).replace(microsecond=0)
     limits: dict[str, int] = {"perCall": usd(per_call_usd), "perDay": usd(per_day_usd)}
@@ -239,6 +241,8 @@ def issue_mandate(
         limits["total"] = usd(total_usd)
     if per_product_per_day_usd is not None:
         limits["perProductPerDay"] = usd(per_product_per_day_usd)
+    if approval_above_usd is not None:
+        limits["approvalAbove"] = usd(approval_above_usd)
     body: dict[str, Any] = {
         "version": 1,
         "audience": [a.rstrip("/") for a in audience],
@@ -380,6 +384,22 @@ def revoke_payload(by: AgentKey, *, hub_origin: str, digest: str, t: int | None 
     nonce = nonce or _nonce()
     message = "\n".join(["aimarket-mandate-revoke/1", hub_origin.rstrip("/"), digest, str(t), nonce]).encode()
     return {"digest": digest, "by": by.did, "t": t, "n": nonce, "s": b64url(by.sign(message))}
+
+
+def approval_payload(by: AgentKey, *, hub_origin: str, approval: Mapping[str, Any], decision: str = "approve",
+                     t: int | None = None, nonce: str | None = None) -> dict[str, Any]:
+    """Body of ``POST /ai-market/v2/mandates/approvals/{approval_id}``: an owner's signed answer
+    to an approval request (§5.6). ``approval`` is the request as the hub returned it; the
+    signature covers its exact request bytes and ceiling, so read it again before signing."""
+    if decision not in ("approve", "deny"):
+        raise ValueError("decision must be approve or deny")
+    t = int(time.time()) if t is None else int(t)
+    nonce = nonce or _nonce()
+    message = "\n".join([
+        "aimarket-mandate-approval/1", hub_origin.rstrip("/"), str(approval["approval_id"]), decision,
+        str(approval["mandate"]), str(approval["body_sha256"]), str(int(approval["max_micro"])), str(t), nonce,
+    ]).encode()
+    return {"decision": decision, "by": by.did, "t": t, "n": nonce, "s": b64url(by.sign(message))}
 
 
 @dataclass
