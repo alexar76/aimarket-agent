@@ -5,11 +5,11 @@
 > and re-synced here, so your contribution becomes canonical.
 > 💬 **[Issues](https://github.com/alexar76/aimarket-agent/issues)** · **[Pull requests](https://github.com/alexar76/aimarket-agent/pulls)** both welcome.
 
-# AIMarket Agent v2.2.0
+# AIMarket Agent
 
 <!-- aicom-readme-badges -->
 <p align="center">
-  <a href="https://github.com/alexar76/aimarket-agent/actions/workflows/ci.yml"><img src="https://raw.githubusercontent.com/alexar76/aimarket-agent/refs/heads/main/docs/badges/ci.svg" alt="CI" /></a>
+  <a href="https://github.com/alexar76/aimarket-agent/actions/workflows/ci.yml"><img src="https://github.com/alexar76/aimarket-agent/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="https://raw.githubusercontent.com/alexar76/aimarket-agent/refs/heads/main/docs/badges/coverage.svg"><img src="https://raw.githubusercontent.com/alexar76/aimarket-agent/refs/heads/main/docs/badges/coverage.svg" alt="Test coverage" /></a>
   <a href="https://github.com/alexar76/aimarket-agent/blob/main/LICENSE"><img src="https://raw.githubusercontent.com/alexar76/aimarket-agent/refs/heads/main/docs/badges/license.svg" alt="License: Apache-2.0" /></a>
 </p>
