@@ -25,7 +25,7 @@ import hashlib
 import secrets
 import time
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any, Iterable, Mapping
 
@@ -434,8 +434,8 @@ class JobContext:
     the headers only place it in the job tree.
     """
 
-    token: str
-    grant: str = ""
+    token: str = field(repr=False)
+    grant: str = field(default="", repr=False)
     hub: str = ""
 
     @classmethod

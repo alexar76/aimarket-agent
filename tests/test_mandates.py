@@ -7,6 +7,8 @@ document from this SDK that the reference would have canonicalized differently.
 """
 from __future__ import annotations
 
+
+
 import json
 import random
 from pathlib import Path
@@ -206,3 +208,10 @@ class TestOwnerApproval:
                             per_day_usd=100, approval_above_usd=10)
         assert doc["credentialSubject"]["aimarketMandate"]["limits"]["approvalAbove"] == 10_000_000
         assert verify_document(doc)
+
+
+def test_job_context_representation_never_reveals_grant_credentials():
+    from aimarket_agent.mandates import JobContext
+    context = JobContext(token="repr-only-job-token", grant="repr-only-money-grant")
+    assert "repr-only-job-token" not in repr(context)
+    assert "repr-only-money-grant" not in repr(context)
