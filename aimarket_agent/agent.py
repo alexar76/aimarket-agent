@@ -10,6 +10,7 @@ Designed to be pip-installed by any AI agent runtime.
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 from typing import Any
@@ -56,14 +57,21 @@ class AIMarketAgent:
         verify_receipts: bool = True,
         api_key: str = "",
         mandate: Mandate | None = None,
+        sandbox_visitor: str = "",
     ):
         self.base_url = base_url.rstrip("/")
         self.budget = budget
         # How single invokes pay, in order of preference: a mandate (the agent holds its own
         # key and the owner's limits; it never sees the owner's API key — mandates.md §5), a
-        # credits API key, or a payment channel opened per call.
+        # credits API key, the hub's free trial (a stable visitor id, no payment), or a payment
+        # channel opened per call.
         self.api_key = api_key
         self.mandate = mandate
+        # The free trial tier existed on the hub since 3.15 and was reachable from aimarket-mcp,
+        # never from this SDK: a stranger following the README got a bare 402 on the first
+        # invoke. A visitor id (8-64 chars, letters/digits/-/_) stands in for payment; the hub
+        # publishes the allowance in /.well-known/ai-market.json (free_trial).
+        self.sandbox_visitor = sandbox_visitor or os.environ.get("AIMARKET_SANDBOX_VISITOR", "")
         self.timeout = timeout
         self.affiliate_id = affiliate_id
         # When True, each invoke receipt is cryptographically verified against the
@@ -209,6 +217,8 @@ class AIMarketAgent:
                     headers["X-Payment-Channel-Secret"] = secret
             if self.affiliate_id:
                 headers["X-AIMarket-Affiliate"] = self.affiliate_id
+            if not channel_id and self.sandbox_visitor:
+                headers["X-AIMarket-Sandbox-Visitor"] = self.sandbox_visitor
 
             payload: dict[str, Any] = {
                 "product_id": pid,
@@ -367,6 +377,10 @@ class AIMarketAgent:
             headers.update(self.mandate.headers(raw))
         elif self.api_key:
             headers["X-API-Key"] = self.api_key
+        elif self.sandbox_visitor:
+            # Free trial: no channel is opened; the hub answers with a signed sandbox receipt,
+            # and 429 trial_quota_exhausted (402 on a lifetime window) once the allowance is spent.
+            headers["X-AIMarket-Sandbox-Visitor"] = self.sandbox_visitor
         else:
             channel_id = self._open_channel()
             if channel_id:
@@ -391,6 +405,10 @@ class AIMarketAgent:
             return {"safety_blocked": True, **rejection}
 
         body = r.json()
+        if r.status_code >= 400 and isinstance(body, dict):
+            # The hub's error body (402 payment_required, 429 trial_quota_exhausted, 404 for a
+            # federated capability without source_hub) keeps its status, so a caller can say why.
+            body.setdefault("http_status", r.status_code)
         if self.verify_receipts and isinstance(body, dict) and body.get("receipt"):
             vr = self.verify_receipt(body.get("receipt"), source_hub=source_hub)
             body["receipt_verified"] = bool(vr)

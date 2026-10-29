@@ -11,9 +11,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 
 from aimarket_agent.agent import AIMarketAgent
+
+# The hub's free trial: a stable id of your choosing in X-AIMarket-Sandbox-Visitor, no payment,
+# a few invokes per window. Read from the environment so the README's one-liners stay short.
+_SANDBOX_ENV = "AIMARKET_SANDBOX_VISITOR"
 
 _BOLD = "\033[1m"
 _DIM = "\033[2m"
@@ -35,6 +40,8 @@ def main() -> int:
     run_p.add_argument("--base-url", default="http://127.0.0.1:9083")
     run_p.add_argument("--budget", type=float, default=3.0)
     run_p.add_argument("--affiliate", default="")
+    run_p.add_argument("--sandbox-visitor", default=os.environ.get(_SANDBOX_ENV, ""),
+                       help=f"free-trial visitor id (8-64 chars, letters/digits/-/_); default ${_SANDBOX_ENV}")
     run_p.add_argument("--json", action="store_true")
 
     # search
@@ -50,6 +57,10 @@ def main() -> int:
     invoke_p.add_argument("--base-url", default="http://127.0.0.1:9083")
     invoke_p.add_argument("--input", default="{}", help="JSON input payload")
     invoke_p.add_argument("--budget", type=float, default=3.0)
+    invoke_p.add_argument("--source-hub", default="local",
+                          help="hub that serves a federated capability — the source_hub shown by `search`")
+    invoke_p.add_argument("--sandbox-visitor", default=os.environ.get(_SANDBOX_ENV, ""),
+                          help=f"free-trial visitor id (8-64 chars, letters/digits/-/_); default ${_SANDBOX_ENV}")
 
     args = parser.parse_args()
 
@@ -69,6 +80,7 @@ def _cmd_run(args) -> int:
         base_url=args.base_url,
         budget=args.budget,
         affiliate_id=args.affiliate,
+        sandbox_visitor=args.sandbox_visitor,
     )
     try:
         result = agent.run(args.task)
@@ -134,6 +146,9 @@ def _cmd_search(args) -> int:
         print(f"     ${m.get('price_per_call_usd', 0):.2f} · {m.get('p50_latency_ms', '?')}ms")
         if m.get("source_hub_name"):
             print(f"     🌐 {m['source_hub_name']} (trust: {m.get('trust_score', '?')})")
+        if m.get("source_hub") and m.get("source_hub") != "local":
+            # A federated capability is invoked with this value: `invoke … --source-hub <it>`.
+            print(f"     source_hub: {m['source_hub']}")
         print()
     return 0
 
@@ -144,14 +159,19 @@ def _cmd_invoke(args) -> int:
     capability_id = parts[1] if len(parts) > 1 else parts[0]
     inp = json.loads(args.input)
 
-    agent = AIMarketAgent(base_url=args.base_url, budget=args.budget)
+    agent = AIMarketAgent(base_url=args.base_url, budget=args.budget,
+                          sandbox_visitor=args.sandbox_visitor)
     try:
-        result = agent.invoke_single(product_id, capability_id, inp)
+        result = agent.invoke_single(product_id, capability_id, inp, source_hub=args.source_hub)
     finally:
         agent.close()
 
     if result.get("safety_blocked"):
         print(f"[{_RED}safety{_RESET}] Blocked: {result.get('category')} — {result.get('reason')}")
+        return 1
+    if result.get("refused"):
+        print(f"[{_RED}refused{_RESET}] {result.get('error') or result.get('reason') or 'mandate or job refusal'}",
+              file=sys.stderr)
         return 1
 
     ok = result.get("success", False)
@@ -159,8 +179,33 @@ def _cmd_invoke(args) -> int:
     color = _GREEN if ok else _RED
     print(f"[{color}invoke{_RESET}] {capability_id} ${result.get('price_usd', 0):.2f} {mark}")
     if ok:
-        print(json.dumps(result.get("result", {}), indent=2, ensure_ascii=False))
-    return 0 if ok else 1
+        # The hub answers with `output`; older providers used `result`. Printing only the
+        # latter showed "{}" for a successful free-trial call.
+        payload = result.get("output", result.get("result", {}))
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        sandbox = result.get("sandbox")
+        if isinstance(sandbox, dict) and sandbox.get("sandbox"):
+            print(f"[{_DIM}trial{_RESET}] free tier: {sandbox.get('remaining', '?')} of "
+                  f"{sandbox.get('max_trials', '?')} invokes left in this window", file=sys.stderr)
+        if result.get("receipt"):
+            print(f"[{_DIM}receipt{_RESET}] signed, verified={result.get('receipt_verified')}",
+                  file=sys.stderr)
+        return 0
+
+    # Until 2.6.1 a refused call printed only the "✗" above. A stranger following the README
+    # saw a bare failure for a 402 and left without learning that the free tier existed.
+    status = result.get("http_status")
+    err = result.get("error") or result.get("code") or (f"http {status}" if status else "not delivered")
+    detail = result.get("detail") or result.get("message") or ""
+    print(f"[{_RED}error{_RESET}] {err}" + (f": {detail}" if detail else ""), file=sys.stderr)
+    if status in (402, 429) or err in ("payment_required", "trial_quota_exhausted"):
+        print(
+            f"[{_DIM}hint{_RESET}] No key, channel or trial id was sent. Free trial: "
+            f"--sandbox-visitor <a stable id you choose> (or ${_SANDBOX_ENV}); a key with prepaid "
+            f"credits: {args.base_url}/start. Federated capabilities need --source-hub (see `search`).",
+            file=sys.stderr,
+        )
+    return 1
 
 
 if __name__ == "__main__":

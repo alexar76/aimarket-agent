@@ -1,10 +1,3 @@
-<!-- aicom-mirror-notice -->
-> **🔄 Synced from a monorepo — but with a live history.** `aimarket-agent` mirrors the
-> canonical AI-Factory monorepo. History here is append-only (no force-push).
-> **Pull requests are welcome** — merged PRs are imported back into the monorepo
-> and re-synced here, so your contribution becomes canonical.
-> 💬 **[Issues](https://github.com/alexar76/aimarket-agent/issues)** · **[Pull requests](https://github.com/alexar76/aimarket-agent/pulls)** both welcome.
-
 # AIMarket Agent
 
 <!-- aicom-readme-badges -->
@@ -15,6 +8,17 @@
 </p>
 <!-- /aicom-readme-badges -->
 
+<!-- aicom-mirror-notice -->
+> 🔄 Synced from the [AI-Factory monorepo](https://github.com/alexar76/aicom) (append-only history). **Pull requests are welcome** — merged PRs are imported back and re-synced here. [Issues](https://github.com/alexar76/aimarket-agent/issues) · [Pull requests](https://github.com/alexar76/aimarket-agent/pulls)
+
+
+
+
+
+
+
+
+
 > **Ecosystem:** [AICOM overview & live demos](https://ecosystem.modelmarket.dev/) · **Community:** [Discord · Pollux](https://discord.gg/JjWxGhW9pP) · [Telegram · Castor](https://t.me/just_for_agents)
 
 **Reference consumer agent for the AIMarket Protocol.**
@@ -24,13 +28,19 @@
 
 ## Live Hub
 
-This agent connects to **[modelmarket.dev](https://modelmarket.dev)** — the reference hub, currently serving 47 capabilities — 5 of its own and 42 federated. Federated peers and **[oracles](https://github.com/alexar76/oracles)** (Platon randomness, Chronos VDF, Murmuration consensus, Lumen reputation, …) appear in search when their manifests are pinned on the hub.
+This agent connects to **[modelmarket.dev](https://modelmarket.dev)** — the reference hub. Most of its catalogue is federated: peer hubs and the **[oracles](https://github.com/alexar76/oracles)** (Platon randomness, Chronos VDF, Murmuration consensus, Lumen reputation, …) appear in `search` when their manifests are pinned on the hub, each with a `source_hub` that `invoke` needs. The live count is on the hub's front page and in [/.well-known/ai-market.json](https://modelmarket.dev/.well-known/ai-market.json).
 
 ## Install
 
 ```bash
-pip install aimarket-agent
+pip install aimarket-agent        # Python 3.11 or newer
 ```
+
+> **No key? Start on the free trial.** The hub runs a free tier: a few invokes per visitor per window, each with a signed receipt (`sandbox: true`), no wallet, no payment channel.
+> - From this SDK or CLI: pass `sandbox_visitor="<a stable id you choose, 8–64 chars>"` or `--sandbox-visitor`, or set `AIMARKET_SANDBOX_VISITOR` (aimarket-agent 2.6.1+).
+> - From an MCP client (Claude Code, Cursor, …): `pip install aimarket-mcp` → `market_search` / `market_invoke`, or paste `https://modelmarket.dev/mcp` as a Streamable-HTTP server.
+> - Model-backed capabilities are excluded from the free tier; the allowance, the header and the exhausted status are published in [`free_trial`](https://modelmarket.dev/.well-known/ai-market.json).
+> - To pay: a key with prepaid USDC credits from [modelmarket.dev/start](https://modelmarket.dev/start) (`api_key=`), a [mandate](docs/mandates.md), or a payment channel per call (the default when nothing else is set).
 
 ## Quick Start
 
