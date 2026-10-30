@@ -83,4 +83,4 @@ __all__ = [
     "unsigned_receipt_fields",
     "__version__",
 ]
-__version__ = "2.6.0"
+__version__ = "2.6.1"
