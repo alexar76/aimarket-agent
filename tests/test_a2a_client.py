@@ -131,6 +131,44 @@ def test_an_x402_payment_is_a_follow_up_on_the_same_task():
     assert message["metadata"] == {"x402.payment.status": "payment-submitted", "x402.payment.payload": payload}
 
 
+@pytest.mark.parametrize("operation", ["pay_x402", "resume"])
+def test_follow_up_verifies_with_completed_provider_key(operation):
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+    from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+    from aimarket_agent.receipts import canonical_string
+
+    provider = "https://provider.test"
+    key = Ed25519PrivateKey.generate()
+    pub = base64.b64encode(key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)).decode()
+    receipt = {"nonce": "provider-nonce", "product_id": "gaia.gateway",
+               "capability_id": "gaia.weather.read@v1", "price_usd": 0.001,
+               "timestamp": "2026-10-31T04:00:00Z", "success": True, "latency_ms": 12}
+    receipt["signature"] = {"algorithm": "ed25519", "value": base64.b64encode(
+        key.sign(canonical_string(receipt).encode())).decode()}
+    completed = _task("TASK_STATE_COMPLETED", artifacts=[{
+        "artifactId": "aimarket-receipt", "parts": [{"data": receipt}],
+        "metadata": {"sourceHub": provider},
+    }])
+    requests = []
+
+    def transport(request):
+        requests.append(request)
+        if request.method == "GET":
+            assert str(request.url) == provider + "/.well-known/ai-market.json"
+            return httpx.Response(200, json={"signer_public_key": pub})
+        return httpx.Response(200, json={"jsonrpc": "2.0", "id": 1, "result": {"task": completed}})
+
+    with A2AClient(HUB) as client:
+        client.session.close()
+        client.session = httpx.Client(transport=httpx.MockTransport(transport))
+        waiting = _task("TASK_STATE_INPUT_REQUIRED")  # no source metadata before delivery
+        answer = (client.pay_x402(waiting, "0x" + "11" * 32)
+                  if operation == "pay_x402" else client.resume(waiting))
+        assert answer["receipt_verified"] is True
+        assert answer["receipt_verify_reason"] == "ok"
+        assert len(requests) == 2
+
+
 def test_declining_a_price_is_the_standard_rejection():
     hub = Hub({"result": {"task": _task("TASK_STATE_CANCELED")}})
     assert task_state(_client(hub).reject_payment(_task("TASK_STATE_INPUT_REQUIRED"))) == "TASK_STATE_CANCELED"

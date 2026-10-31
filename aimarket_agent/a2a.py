@@ -261,7 +261,9 @@ class A2AClient:
         # verified on-chain payment in full and reserves nothing else on top of it.
         headers = {"X-API-Key": self.api_key} if self.api_key and self.mandate is None else {}
         answer = self._rpc("SendMessage", {"message": message}, headers=headers)["task"]
-        return self._checked(answer, self._source_hub(task))
+        # A waiting payment task has no receipt artifact or capability metadata.
+        # Resolve the signer from the completed answer, as get_task() does.
+        return self._checked(answer, self._source_hub(answer))
 
     def reject_payment(self, task: dict[str, Any], *, message_id: str | None = None) -> dict[str, Any]:
         """Decline the quoted price (a2a-x402 ``payment-rejected``): the task is CANCELED."""
@@ -289,7 +291,7 @@ class A2AClient:
             message["parts"].append(part)
             self._raw_by_task[task["id"]] = raw  # type: ignore[assignment]
         answer = self._rpc("SendMessage", {"message": message}, headers=self._pay_headers(raw))["task"]
-        return self._checked(answer, self._source_hub(task))
+        return self._checked(answer, self._source_hub(answer))
 
     def _follow_up_message(self, task: dict[str, Any], message_id: str | None, text: str,
                            metadata: dict[str, Any] | None) -> dict[str, Any]:
