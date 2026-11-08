@@ -22,7 +22,7 @@ classifiers = [
 ]
 requires-python = ">=3.11"
 authors = [{name = "AI-Factory", email = "dev@modelmarket.dev"}]
-dependencies = ["httpx>=0.28", "cryptography>=44"]
+dependencies = ["httpx>=0.28", "cryptography>=50.0.2"]
 
 [project.urls]
 Homepage = "https://github.com/alexar76/aimarket-agent"
