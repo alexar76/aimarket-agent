@@ -40,7 +40,7 @@ pip install aimarket-agent        # Python 3.11 or newer
 > - From this SDK or CLI: pass `sandbox_visitor="<a stable id you choose, 8–64 chars>"` or `--sandbox-visitor`, or set `AIMARKET_SANDBOX_VISITOR` (aimarket-agent 2.6.1+).
 > - From an MCP client (Claude Code, Cursor, …): `pip install aimarket-mcp` → `market_search` / `market_invoke`, or paste `https://modelmarket.dev/mcp` as a Streamable-HTTP server.
 > - Model-backed capabilities are excluded from the free tier; the allowance, the header and the exhausted status are published in [`free_trial`](https://modelmarket.dev/.well-known/ai-market.json).
-> - To pay: a key with prepaid USDC credits from [modelmarket.dev/start](https://modelmarket.dev/start) (`api_key=`), a [mandate](docs/mandates.md), or a payment channel per call (the default when nothing else is set).
+> - To pay: a key with prepaid USDC credits from [modelmarket.dev/start](https://modelmarket.dev/start) (`api_key=`), a [mandate](https://github.com/alexar76/aimarket-hub/blob/main/docs/mandates.md), or a payment channel per call (the default when nothing else is set).
 
 ## Quick Start
 
